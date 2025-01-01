@@ -35,7 +35,8 @@ struct TransmitterPacket
 NRFLite radio;
 TransmitterPacket joystick_data;
 
-int main() {
+int main() 
+{
   init();
 
   Serial.begin(9600); //Serial communication for debugging
