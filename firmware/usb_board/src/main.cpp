@@ -1,6 +1,6 @@
-#include "Arduino.h"
+#include "../lib/arduino/Arduino.h"
 #include "SPI.h"
-#include "NRFLite.h"
+#include "../lib/nrflite/NRFLite.h"
 
 const static uint8_t RECEIEVER_ID = 0;
 const static uint8_t CHANNEL = 100;
@@ -21,6 +21,15 @@ struct ReceievedPacket
 
 NRFLite radio;
 ReceievedPacket joystick_data;
+
+void debugPrint()
+{
+	Serial.println(joystick_data.x1_axis);
+	Serial.println(joystick_data.y1_axis);
+	Serial.println(joystick_data.x2_axis);
+	Serial.println(joystick_data.y2_axis);
+	Serial.println(joystick_data.buttons);
+}
 
 int main()
 {
@@ -44,17 +53,4 @@ int main()
 		debugPrint();
 	}
 }
-
-void debugPrint()
-{
-	Serial.println(radio.x1_axys);
-	Serial.println(radio.y1_axys);
-	Serial.println(radio.x2_axys);
-	Serial.println(radio.y2_axys);
-	Serial.println(radio.buttons);
-}
-
-
-
-
 
