@@ -4,6 +4,7 @@ rm -r ./build/*
 cd ./build
 avr-gcc -mmcu=atmega328p -DF_CPU=16000000UL -Os -I../lib/arduino -c ../lib/arduino/*.{c,S}
 avr-g++ -mmcu=atmega328p -DF_CPU=16000000UL -Os -I../lib/arduino -c ../lib/arduino/*.cpp
+rm -f WInterrupts.o
 avr-g++ -mmcu=atmega328p -DF_CPU=16000000UL -Os -I../lib/arduino -I../lib/nrflite -c ../lib/nrflite/NRFLite.cpp
 avr-gcc -mmcu=atmega328p -DF_CPU=16000000UL -Os -I../lib/usbdrv  -c ../lib/usbdrv/*.{c,S}
 avr-g++ -mmcu=atmega328p -DF_CPU=16000000UL -Os -I../lib/arduino -I../lib/nrflite -I../lib/usbdrv -I. -c ../src/main.cpp
