@@ -33,7 +33,7 @@ section at the end of this file).
 /* This is the bit number in USB_CFG_IOPORT where the USB D- line is connected.
  * This may be any bit in the port.
  */
-#define USB_CFG_DPLUS_BIT       4
+#define USB_CFG_DPLUS_BIT       2
 /* This is the bit number in USB_CFG_IOPORT where the USB D+ line is connected.
  * This may be any bit in the port. Please note that D+ must also be connected
  * to interrupt pin INT0! [You can also use other interrupts, see section
@@ -42,7 +42,6 @@ section at the end of this file).
  * interrupt, the USB interrupt will also be triggered at Start-Of-Frame
  * markers every millisecond.]
  */
-#define USB_CFG_INTERRUPT       1
 
 #define USB_CFG_CLOCK_KHZ       (F_CPU/1000)
 /* Clock rate of the AVR in kHz. Legal values are 12000, 12800, 15000, 16000,
@@ -62,13 +61,13 @@ section at the end of this file).
 
 /* ----------------------- Optional Hardware Config ------------------------ */
 
-/* #define USB_CFG_PULLUP_IOPORTNAME   D */
+   #define USB_CFG_PULLUP_IOPORTNAME   D
 /* If you connect the 1.5k pullup resistor from D- to a port pin instead of
  * V+, you can connect and disconnect the device from firmware by calling
  * the macros usbDeviceConnect() and usbDeviceDisconnect() (see usbdrv.h).
  * This constant defines the port on which the pullup resistor is connected.
  */
-/* #define USB_CFG_PULLUP_BIT          4 */
+   #define USB_CFG_PULLUP_BIT          4
 /* This constant defines the bit number in USB_CFG_PULLUP_IOPORT (defined
  * above) where the 1.5k pullup resistor is connected. See description
  * above for details.
@@ -378,9 +377,9 @@ section at the end of this file).
 /* #define USB_INTR_CFG_SET        ((1 << ISC00) | (1 << ISC01)) */
 /* #define USB_INTR_CFG_CLR        0 */
 /* #define USB_INTR_ENABLE         GIMSK */
-/* #define USB_INTR_ENABLE_BIT     INT0 */
+/* #define USB_INTR_ENABLE_BIT     INT0*/
 /* #define USB_INTR_PENDING        GIFR */
 /* #define USB_INTR_PENDING_BIT    INTF0 */
-/* #define USB_INTR_VECTOR         INT0_vect */
+/* #define USB_INTR_VECTOR         INT0_vect*/
 
 #endif /* __usbconfig_h_included__ */
