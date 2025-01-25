@@ -9,8 +9,8 @@ const static uint8_t TRANSMITTER_ID = 1;
 const static uint8_t RECEIVER_ID = 0;
 const static uint8_t CHANNEL = 100; //used by default, may change later
 //IDs and channel are usefull for handling interfierence between more devices
-const static uint8_t CE_PIN = 9;
-const static uint8_t CSN_PIN = 10;
+const static uint8_t CE_PIN = 2;
+const static uint8_t CSN_PIN = 3;
 //MOSI PIN 11
 //MISO PIN 12
 //SCK  PIN 13
@@ -57,6 +57,7 @@ int main()
       while (1);
       Serial.println("radio failed to initalize");
       //here something for debbuging later
+      //set firs led on!
   }
 
   joystick_data.transmitter_id = TRANSMITTER_ID;
@@ -68,6 +69,11 @@ int main()
     if(!radio.send(RECEIVER_ID, &joystick_data, sizeof(joystick_data), NRFLite::NO_ACK)) //NO_ACK -> I don't want to check if every packet was correctly received
     {
       Serial.println("radio failed to send data");
+      //set second led on
+    }
+    else
+    {
+	//set thir led on
     }
   }
 
