@@ -12,15 +12,15 @@ const static uint8_t CHANNEL = 100; //used by default, may change later
 const static uint8_t CE_PIN = 1;
 const static uint8_t CSN_PIN = 10;
 
-#define A_BUTTON_PIN PD2
-#define B_BUTTON_PIN PD3
-#define C_BUTTON_PIN PD4
-#define D_BUTTON_PIN PD5
-#define FIRE_BUTTON_PIN PD6
-#define SPECIAL_BUTTON_PIN PD7
+#define A_BUTTON_PIN PD0
+#define B_BUTTON_PIN PD1
+#define C_BUTTON_PIN PD2
+#define D_BUTTON_PIN PD3
+#define FIRE_BUTTON_PIN PD4
+#define SPECIAL_BUTTON_PIN PD5
 
-#define LED1_P PC4
-#define LED2_P PC5
+#define LED1_P PD6
+#define LED2_P PD7
 
 void setup_pins();
 void setup_adc();
@@ -63,11 +63,6 @@ int main()
     setJoystickData();
     if(!radio.send(RECEIVER_ID, &joystick_data, sizeof(joystick_data), NRFLite::NO_ACK)) //NO_ACK -> I don't want to check if every packet was correctly received
     {
-      PORTC &= ~(1 << LED1_P); //set second led off
-    }
-    else
-    {
-	PORTC |= (1 << LED2_P); //set second led on	
     }
   }
 
@@ -82,8 +77,6 @@ void setup_pins() {
     // Set led pins as output
     DDRC |= (1 << LED1_P) | (1 << LED2_P);
     //seting led pins as high
-    PORTC |= (1 << LED1_P);
-    PORTC |= (1 << LED2_P);
 }
 
 void setup_adc() {
@@ -108,8 +101,8 @@ void setJoystickData()
 {
   joystick_data.x1_axis = read_adc(0) * 64;
   joystick_data.y1_axis = read_adc(1) * 64;
-  joystick_data.x2_axis = read_adc(2) * 64;
-  joystick_data.y2_axis = read_adc(3) * 64;
+  joystick_data.x2_axis = read_adc(2) / 4;
+  joystick_data.y2_axis = read_adc(3) / 4;
 
 /* Since I have only six buttons on my device, I can use the SPECIAL button
 to act as switch between two sets of buttons. So instead of 6 buttons I will
@@ -123,7 +116,7 @@ use one set of buttons at once.
     {
       mod_i += 5; //change the bit position by 5 to change the second set of buttons
     }
-    if(!(PIND & (1 << (i + 2)))) //asks if a currently itarated pin is 1
+    if(!(PIND & (1 << i))) //asks if a currently itarated pin is 1
     {
       joystick_data.buttons |= (1 << mod_i); //sets pin in buttons corresponding to the physical to 1
     }
