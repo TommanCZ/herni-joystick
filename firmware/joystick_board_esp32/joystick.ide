@@ -1,0 +1,114 @@
+/*
+ * Flight controller test
+ */
+
+#include <Arduino.h>
+#include <BleGamepad.h>
+
+#define numOfButtons 16
+#define numOfHatSwitches 0
+#define enableX true
+#define enableY true
+#define enableZ false
+#define enableRX false  //heh
+#define enableRY false  //heh
+#define enableRZ false
+#define enableSlider1 false
+#define enableSlider2 false
+#define enableRudder true
+#define enableThrottle true
+#define enableAccelerator false
+#define enableBrake true
+#define enableSteering false
+
+int8_t buttons[6] = {27,26,25, 33, 32, 14};
+BleGamepad bleGamepad("Flight Stick", "t0116", 100);
+
+void setup()
+{
+  Serial.begin(9600);
+  Serial.println("Starting BLE work!");
+
+  setupJoystick();
+  setup_buttons();
+}
+
+void loop()
+{
+    if (bleGamepad.isConnected())
+    {
+       setAxis();
+       setButtons();;
+       delay(20);
+       Serial.println("Connected");
+    }
+    Serial.println("maybe?");
+}
+
+void setupJoystick()
+{
+    // Setup controller with 16 buttons (plus start and select), accelerator, brake and steering
+    BleGamepadConfiguration bleGamepadConfig;
+    bleGamepadConfig.setAutoReport(false);
+    bleGamepadConfig.setControllerType(CONTROLLER_TYPE_MULTI_AXIS); // CONTROLLER_TYPE_JOYSTICK, CONTROLLER_TYPE_GAMEPAD (DEFAULT), CONTROLLER_TYPE_MULTI_AXIS
+    bleGamepadConfig.setButtonCount(numOfButtons);
+    bleGamepadConfig.setIncludeStart(true);
+    bleGamepadConfig.setIncludeSelect(true);
+    bleGamepadConfig.setWhichAxes(enableX, enableY, enableZ, enableRX, enableRY, enableRZ, enableSlider1, enableSlider2);      // Can also be done per-axis individually. All are true by default
+    bleGamepadConfig.setWhichSimulationControls(enableRudder, enableThrottle, enableAccelerator, enableBrake, enableSteering); // Can also be done per-control individually. All are false by default
+    bleGamepadConfig.setHatSwitchCount(numOfHatSwitches);                                                                      // 1 by default
+    // Some non-Windows operating systems and web based gamepad testers don't like min axis set below 0, so 0 is set by default
+    bleGamepadConfig.setAxesMin(-32767); // -32767 --> int16_t - 16 bit signed integer - Can be in decimal or hexadecimal
+    bleGamepadConfig.setAxesMax(32767); // 32767 --> int16_t - 16 bit signed integer - Can be in decimal or hexadecimal 
+    // Shows how simulation control min/max axes can be set independently of the other axes
+    bleGamepadConfig.setSimulationMin(-32767); // -255 --> int16_t - 16 bit signed integer - Can be in decimal or hexadecimal
+    bleGamepadConfig.setSimulationMax(32767); // 255 --> int16_t - 16 bit signed integer - Can be in decimal or hexadecimal
+    bleGamepad.begin(&bleGamepadConfig);
+
+    // changing bleGamepadConfig after the begin function has no effect, unless you call the begin function again
+
+    // Set throttle and rudder to min
+    // Set x and y axes to center
+    bleGamepad.setX(0);
+    bleGamepad.setY(0);
+    bleGamepad.setThrottle(0);  //heh
+    bleGamepad.setRudder(0);  //heh
+}
+
+void setup_buttons()
+{
+  pinMode(27, INPUT_PULLUP);
+  pinMode(26, INPUT_PULLUP);
+  pinMode(25, INPUT_PULLUP);
+  pinMode(33, INPUT_PULLUP);
+  pinMode(32, INPUT_PULLUP);
+  pinMode(14, INPUT_PULLUP);
+}
+
+void setAxis()
+{
+  bleGamepad.setX(map(analogRead(4),0,4096,-32767,32767));
+  bleGamepad.setY(map(analogRead(2),0,4095,-32767,32767));
+  bleGamepad.setRudder(map(analogRead(15),0,4096,-32767,32767)); //heh
+  bleGamepad.setThrottle(map(analogRead(13),0,4095,-32767,32767)); //heh
+  bleGamepad.sendReport();
+}
+
+void setButtons()
+{
+  for(uint8_t i = 0; i < 5; i++)
+  {
+    int adder = 0;
+    if(digitalRead(buttons[5]) == LOW)
+    {
+      adder += 5;
+    }
+    if(digitalRead(buttons[i]) == LOW)
+    {
+      bleGamepad.press(i + 1 + adder);
+    }
+    else
+    {
+      bleGamepad.release(i + 1 + adder);
+    }
+}
