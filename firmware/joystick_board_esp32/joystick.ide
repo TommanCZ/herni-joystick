@@ -1,7 +1,3 @@
-/*
- * Flight controller test
- */
-
 #include <Arduino.h>
 #include <BleGamepad.h>
 
@@ -10,16 +6,26 @@
 #define enableX true
 #define enableY true
 #define enableZ true
-#define enableRX true  //CH
-#define enableRY true  //CH
+#define enableRX true
+#define enableRY true
 #define enableRZ true
 #define enableSlider1 true
-#define enableSlider2 true //CH
+#define enableSlider2 true
 #define enableRudder true
 #define enableThrottle true
 #define enableAccelerator false
 #define enableBrake true
 #define enableSteering false
+
+const int ADC_MIN = 0;
+const int ADC_MAX = 4095;
+const int ADC_CENTER = (ADC_MAX + 1) / 2;
+const int DESCRIPTOR_MIN = -32767;
+const int DESCRIPTOR_MAX = 32767;
+const uint8_t X_AXIS_PIN = 4;
+const uint8_t Y_AXIS_PIN = 2;
+const uint8_t RX_AXIS_PIN = 15;
+const uint8_t RY_AXIS_PIN = 13;
 
 int8_t buttons[6] = {27,26,25, 33, 32, 14};
 BleGamepad bleGamepad("Flight Stick", "t0116", 100);
@@ -36,7 +42,7 @@ void loop()
     {
        setAxis();
        setButtons();;
-       delay(5);
+       delay(20); //change later
     }
 }
 
@@ -45,7 +51,7 @@ void setupJoystick()
     BleGamepadConfiguration bleGamepadConfig;
     bleGamepadConfig.setAutoReport(false);
     bleGamepadConfig.setWhichAxes(enableX, enableY, enableZ, enableRX, enableRY, enableRZ, enableSlider1, enableSlider2);
-    bleGamepadConfig.setHatSwitchCount(numOfHatSwitches);                                                                     
+    bleGamepadConfig.setHatSwitchCount(numOfHatSwitches);                                                                      // 1 by default
     bleGamepadConfig.setAxesMin(-32767);
     bleGamepadConfig.setAxesMax(32767);
     bleGamepad.begin(&bleGamepadConfig);
@@ -65,10 +71,10 @@ void setup_buttons()
 
 void setAxis()
 {
-  bleGamepad.setX(map(analogRead(4),0,4096,-32767,32767));
-  bleGamepad.setY(map(analogRead(2),0,4095,-32767,32767));
-  bleGamepad.setZ(map(analogRead(15),0,4096,-32767,32767));
-  bleGamepad.setRZ(map(analogRead(13),0,4095,-32767,32767));
+  bleGamepad.setX(getAxis(X_AXIS_PIN,3,5));
+  bleGamepad.setY(getAxis(Y_AXIS_PIN,3,5));
+  bleGamepad.setRX(getAxis(RX_AXIS_PIN,1,3));
+  bleGamepad.setRY(getAxis(RY_AXIS_PIN,1,3));
   bleGamepad.sendReport();
 }
 
@@ -101,4 +107,25 @@ void setButtons()
       bleGamepad.release(i + 1 + adder);
     }
   }
+}
+
+int getAxis(uint8_t pin, uint8_t repetition_number, uint8_t zero_offset_percentage)
+{
+  int sum = 0;
+  for (int i = 0; i < repetition_number; i++) {
+    sum += analogRead(pin);
+  }
+  
+  int average_value = sum / repetition_number;
+
+  float deadzone_fraction = zero_offset_percentage / 100.0;
+  int deadzone_threshold = deadzone_fraction * (ADC_CENTER);
+
+  if (average_value > (ADC_CENTER - deadzone_threshold) && average_value < (ADC_CENTER + deadzone_threshold)) 
+  {
+    average_value = ADC_CENTER;
+  }
+
+  int output = map(average_value, ADC_MIN, ADC_MAX, DESCRIPTOR_MIN, DESCRIPTOR_MAX);
+  return output;
 }
