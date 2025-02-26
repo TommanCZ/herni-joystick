@@ -22,6 +22,7 @@ const int ADC_MAX = 4095;
 const int ADC_CENTER = (ADC_MAX + 1) / 2;
 const int DESCRIPTOR_MIN = -32767;
 const int DESCRIPTOR_MAX = 32767;
+const int DESCRIPTOR_CENTER = (DESCRIPTOR_MIN + DESCRIPTOR_MAX)/2;
 const uint8_t X_AXIS_PIN = 4;
 const uint8_t Y_AXIS_PIN = 2;
 const uint8_t RX_AXIS_PIN = 15;
@@ -142,9 +143,8 @@ int getAxis(uint8_t pin, uint8_t repetition_number, uint8_t zero_offset_percenta
   for (int i = 0; i < repetition_number; i++) {
     sum += analogRead(pin);
   }
-  
   int average_value = sum / repetition_number;
-
+  
   if(average_value > range[1])
   {
     average_value = range[1];
@@ -159,9 +159,15 @@ int getAxis(uint8_t pin, uint8_t repetition_number, uint8_t zero_offset_percenta
 
   if (average_value > (range_center - deadzone_threshold) && average_value < (range_center + deadzone_threshold)) 
   {
-    return (DESCRIPTOR_MIN + DESCRIPTOR_MAX)/2;
+    return DESCRIPTOR_CENTER;
   }
-
-  output = map(average_value, range[0], range[1], DESCRIPTOR_MIN, DESCRIPTOR_MAX);
+  if(average_value > range_center)
+  {
+    output = map(average_value, range_center + deadzone_threshold, range[1], DESCRIPTOR_CENTER, DESCRIPTOR_MAX);
+  }
+  else
+  {
+    output = map(average_value, range_center - deadzone_threshold, range[0], DESCRIPTOR_CENTER, DESCRIPTOR_MIN);
+  }
   return output;
 }
