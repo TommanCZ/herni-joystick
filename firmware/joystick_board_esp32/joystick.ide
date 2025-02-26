@@ -145,6 +145,15 @@ int getAxis(uint8_t pin, uint8_t repetition_number, uint8_t zero_offset_percenta
   
   int average_value = sum / repetition_number;
 
+  if(average_value > range[1])
+  {
+    average_value = range[1];
+  }
+  else if(average_value < range[0])
+  {
+    average_value = range[0];
+  }
+
   float deadzone_fraction = zero_offset_percentage / 100.0;
   int deadzone_threshold = deadzone_fraction * (range_center);
 
