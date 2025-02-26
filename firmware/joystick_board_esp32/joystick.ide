@@ -150,7 +150,7 @@ int getAxis(uint8_t pin, uint8_t repetition_number, uint8_t zero_offset_percenta
 
   if (average_value > (range_center - deadzone_threshold) && average_value < (range_center + deadzone_threshold)) 
   {
-    average_value = range_center;
+    return (DESCRIPTOR_MIN + DESCRIPTOR_MAX)/2;
   }
 
   output = map(average_value, range[0], range[1], DESCRIPTOR_MIN, DESCRIPTOR_MAX);
