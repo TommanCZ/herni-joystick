@@ -1,0 +1,173 @@
+#include <Arduino.h>
+#include <BleGamepad.h>
+
+#define numOfButtons 16
+#define numOfHatSwitches 0
+#define enableX true
+#define enableY true
+#define enableZ true
+#define enableRX true
+#define enableRY true
+#define enableRZ true
+#define enableSlider1 true
+#define enableSlider2 true
+#define enableRudder true
+#define enableThrottle true
+#define enableAccelerator false
+#define enableBrake true
+#define enableSteering false
+
+const int ADC_MIN = 0;
+const int ADC_MAX = 4095;
+const int ADC_CENTER = (ADC_MAX + 1) / 2;
+const int DESCRIPTOR_MIN = -32767;
+const int DESCRIPTOR_MAX = 32767;
+const int DESCRIPTOR_CENTER = (DESCRIPTOR_MIN + DESCRIPTOR_MAX)/2;
+const uint8_t X_AXIS_PIN = 4;
+const uint8_t Y_AXIS_PIN = 2;
+const uint8_t RX_AXIS_PIN = 15;
+const uint8_t RY_AXIS_PIN = 13;
+
+int x_axis_range[2] = {0, 4095};
+int y_axis_range[2] = {0, 4095};
+
+int8_t buttons[6] = {27,26,25, 33, 32, 14};
+BleGamepad bleGamepad("Flight Stick", "t0116", 100);
+
+void setup()
+{
+  //Serial.begin(9600);
+  //Serial.println("Starting BLE work!");
+
+  setupJoystick();
+  setup_buttons();
+}
+
+void loop()
+{
+    if (bleGamepad.isConnected())
+    {
+       setAxis();
+       setButtons();;
+       delay(20); //change later
+       //Serial.println("Connected");
+    }
+    //Serial.println("works");
+}
+
+void setupJoystick()
+{
+    BleGamepadConfiguration bleGamepadConfig;
+    bleGamepadConfig.setAutoReport(false);
+    bleGamepadConfig.setWhichAxes(enableX, enableY, enableZ, enableRX, enableRY, enableRZ, enableSlider1, enableSlider2);
+    bleGamepadConfig.setHatSwitchCount(numOfHatSwitches);                                                                      // 1 by default
+    bleGamepadConfig.setAxesMin(-32767);
+    bleGamepadConfig.setAxesMax(32767);
+    bleGamepad.begin(&bleGamepadConfig);
+    bleGamepad.setAxes(0, 0, 0, 0, 0, 0, 0, 0);       //(X, Y, Z, RX, RY, RZ)
+
+}
+
+void setup_buttons()
+{
+  pinMode(27, INPUT_PULLUP);
+  pinMode(26, INPUT_PULLUP);
+  pinMode(25, INPUT_PULLUP);
+  pinMode(33, INPUT_PULLUP);
+  pinMode(32, INPUT_PULLUP);
+  pinMode(14, INPUT_PULLUP);
+}
+
+void setAxis()
+{
+  bleGamepad.setX(getAxis(X_AXIS_PIN,3,5));
+  bleGamepad.setY(getAxis(Y_AXIS_PIN,3,5));
+  bleGamepad.setRX(getAxis(RX_AXIS_PIN,1,3));
+  bleGamepad.setRY(getAxis(RY_AXIS_PIN,1,3));
+  bleGamepad.sendReport();
+}
+
+void setButtons()
+{
+  for(uint8_t i = 0; i < 5; i++)
+  {
+    int adder = 0;
+    if(digitalRead(buttons[5]) == LOW)
+    {
+      adder += 5;
+      for(uint8_t i = 1; i < 5; i++)
+      {
+        bleGamepad.release(i);
+      }
+    }
+    else
+    {
+      for(uint8_t i = 6; i < 11; i++)
+      {
+        bleGamepad.release(i);
+      }
+    }
+    if(digitalRead(buttons[i]) == LOW)
+    {
+      bleGamepad.press(i + 1 + adder);
+    }
+    else
+    {
+      bleGamepad.release(i + 1 + adder);
+    }
+  }
+}
+
+int getAxis(uint8_t pin, uint8_t repetition_number, uint8_t zero_offset_percentage)
+{
+  int range[2];
+  if(pin == X_AXIS_PIN)
+  {
+    range[0] = x_axis_range[0];
+    range[1] = x_axis_range[1];
+  }
+  else if(pin == Y_AXIS_PIN)
+  {
+    range[0] = y_axis_range[0];
+    range[1] = y_axis_range[1];
+  }
+  else
+  {
+    range[0] = ADC_MIN;
+    range[1] = ADC_MAX;
+  }
+
+  int range_center = (range[0] + range[1])/2;
+  int output;
+  int sum = 0;
+  for (int i = 0; i < repetition_number; i++) {
+    sum += analogRead(pin);
+  }
+  int average_value = sum / repetition_number;
+  
+  if(average_value > range[1])
+  {
+    average_value = range[1];
+  }
+  else if(average_value < range[0])
+  {
+    average_value = range[0];
+  }
+
+  float deadzone_fraction = zero_offset_percentage / 100.0;
+  int deadzone_threshold = deadzone_fraction * (range_center);
+
+  if (average_value > (range_center - deadzone_threshold) && average_value < (range_center + deadzone_threshold)) 
+  {
+    return DESCRIPTOR_CENTER;
+  }
+  if(average_value > range_center)
+  {
+    output = map(average_value, range_center + deadzone_threshold, range[1], DESCRIPTOR_CENTER, DESCRIPTOR_MAX);
+  }
+  else
+  {
+    output = map(average_value, range_center - deadzone_threshold, range[0], DESCRIPTOR_CENTER, DESCRIPTOR_MIN);
+  }
+  return output;
+}
