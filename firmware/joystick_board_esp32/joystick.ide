@@ -24,21 +24,20 @@ const int DESCRIPTOR_MIN = -32767;
 const int DESCRIPTOR_MAX = 32767;
 const int DESCRIPTOR_CENTER = (DESCRIPTOR_MIN + DESCRIPTOR_MAX)/2;
 const uint8_t X_AXIS_PIN = 4;
-const uint8_t Y_AXIS_PIN = 2;
-const uint8_t RX_AXIS_PIN = 15;
-const uint8_t RY_AXIS_PIN = 13;
+const uint8_t Y_AXIS_PIN = 5;
+const uint8_t RX_AXIS_PIN = 8;
+const uint8_t RY_AXIS_PIN = 18;
 
-int x_axis_range[2] = {0, 4095};
-int y_axis_range[2] = {0, 4095};
+int x_axis_range[2] = {1355, 2730};
+//every axis might be sligthly different depending on the potentiometer and its position.
+//I advise everybody to do their own measurements.
+int y_axis_range[2] = {1600,2955};
 
-int8_t buttons[6] = {27,26,25, 33, 32, 14};
+int8_t buttons[6] = {37,35,38,36,39,40};
 BleGamepad bleGamepad("Flight Stick", "t0116", 100);
 
 void setup()
 {
-  //Serial.begin(9600);
-  //Serial.println("Starting BLE work!");
-
   setupJoystick();
   setup_buttons();
 }
@@ -49,10 +48,7 @@ void loop()
     {
        setAxis();
        setButtons();;
-       delay(20); //change later
-       //Serial.println("Connected");
     }
-    //Serial.println("works");
 }
 
 void setupJoystick()
@@ -60,7 +56,7 @@ void setupJoystick()
     BleGamepadConfiguration bleGamepadConfig;
     bleGamepadConfig.setAutoReport(false);
     bleGamepadConfig.setWhichAxes(enableX, enableY, enableZ, enableRX, enableRY, enableRZ, enableSlider1, enableSlider2);
-    bleGamepadConfig.setHatSwitchCount(numOfHatSwitches);                                                                      // 1 by default
+    bleGamepadConfig.setHatSwitchCount(numOfHatSwitches);                                                                      // 1 by default - changed to 0
     bleGamepadConfig.setAxesMin(-32767);
     bleGamepadConfig.setAxesMax(32767);
     bleGamepad.begin(&bleGamepadConfig);
@@ -70,20 +66,20 @@ void setupJoystick()
 
 void setup_buttons()
 {
-  pinMode(27, INPUT_PULLUP);
-  pinMode(26, INPUT_PULLUP);
-  pinMode(25, INPUT_PULLUP);
-  pinMode(33, INPUT_PULLUP);
-  pinMode(32, INPUT_PULLUP);
-  pinMode(14, INPUT_PULLUP);
+  pinMode(35, INPUT_PULLUP);
+  pinMode(36, INPUT_PULLUP);
+  pinMode(37, INPUT_PULLUP);
+  pinMode(38, INPUT_PULLUP);
+  pinMode(39, INPUT_PULLUP);
+  pinMode(40, INPUT_PULLUP);
 }
 
 void setAxis()
 {
-  bleGamepad.setX(getAxis(X_AXIS_PIN,3,5));
-  bleGamepad.setY(getAxis(Y_AXIS_PIN,3,5));
-  bleGamepad.setRX(getAxis(RX_AXIS_PIN,1,3));
-  bleGamepad.setRY(getAxis(RY_AXIS_PIN,1,3));
+  bleGamepad.setX(getAxis(X_AXIS_PIN,3,3,true));
+  bleGamepad.setY(getAxis(Y_AXIS_PIN,3,3,true));
+  bleGamepad.setRX(getAxis(RX_AXIS_PIN,1,3,false));
+  bleGamepad.setRY(getAxis(RY_AXIS_PIN,1,3,false));
   bleGamepad.sendReport();
 }
 
@@ -118,9 +114,11 @@ void setButtons()
   }
 }
 
-int getAxis(uint8_t pin, uint8_t repetition_number, uint8_t zero_offset_percentage)
+int getAxis(uint8_t pin, uint8_t repetition_number, uint8_t zero_offset_percentage, bool reversed)
 {
   int range[2];
+  int final_range[2];
+
   if(pin == X_AXIS_PIN)
   {
     range[0] = x_axis_range[0];
@@ -135,6 +133,17 @@ int getAxis(uint8_t pin, uint8_t repetition_number, uint8_t zero_offset_percenta
   {
     range[0] = ADC_MIN;
     range[1] = ADC_MAX;
+  }
+
+  if(reversed == false)
+  {
+    final_range[0] = DESCRIPTOR_MIN;
+    final_range[1] = DESCRIPTOR_MAX;
+  }
+  else
+  {
+    final_range[0] = DESCRIPTOR_MAX;
+    final_range[1] = DESCRIPTOR_MIN;
   }
 
   int range_center = (range[0] + range[1])/2;
@@ -163,11 +172,11 @@ int getAxis(uint8_t pin, uint8_t repetition_number, uint8_t zero_offset_percenta
   }
   if(average_value > range_center)
   {
-    output = map(average_value, range_center + deadzone_threshold, range[1], DESCRIPTOR_CENTER, DESCRIPTOR_MAX);
+    output = map(average_value, range_center + deadzone_threshold, range[1], DESCRIPTOR_CENTER, final_range[1]);
   }
   else
   {
-    output = map(average_value, range_center - deadzone_threshold, range[0], DESCRIPTOR_CENTER, DESCRIPTOR_MIN);
+    output = map(average_value, range_center - deadzone_threshold, range[0], DESCRIPTOR_CENTER, final_range[0]);
   }
   return output;
 }
